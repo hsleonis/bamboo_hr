@@ -1,0 +1,14 @@
+/* SETUP PAGE */
+.login-page{
+    background-color: #EEE;
+}
+.main{
+    margin: 100px 20px;
+    padding: 35px 45px 45px;
+    background-color: #FFF;
+    border: 1px solid #EEE;
+    box-shadow: 1px 5px 5px rgba(0,0,0,0.1);
+}
+.login-heading{
+    margin-bottom: 30px;
+}

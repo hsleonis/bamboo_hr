@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Bamboo HR</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'employee/css/bootstrap.min.css' %}" >
+	<link rel="stylesheet" href="{% static 'employee/css/zebra_datepicker.min.css' %}">
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'employee/css/dashboard-style.css' %}">
+
+	<!-- JQUERY -->
+	<script src="{% static 'employee/js/jquery-3.2.1.min.js' %}"></script>
+
+  </head>
+  <body>
+
+  	<section class="container-fluid">
+  		<div class="row header">
+  			<div class="col-sm-6">
+  				<div class="header-title">
+  					<h2>Bamboo HR</h2>
+  				</div>
+  			</div>
+  			<div class="col-sm-6"></div>
+  		<div class="row">
+  			<div class="col-sm-12">
+						<div class="header-nav">
+							<ul>
+								<li class="single-profile-tab"><a href="/">Single Profile Upload</a></li>
+								<li class="document-tab"><a href="/document_download">Audit Document Download</a></li>
+								<li class="backup-tab"><a href="/backup">Backup</a></li>
+								<li class="report-tab"><a href="/report">Reporting</a></li>
+							</ul>
+						</div>
+				</div>
+  			</div>
+  		</div>
+  	</section>
+
+	<section class="main-wrapper">
+	  <div class="container-fluid">
+		   <div class="row">
+				<div class="main-content">
+					 {% block maincontent %}
+						Page content goes here
+					 {% endblock maincontent %}
+				</div>
+		   </div>
+	  </div>
+ 	</section>
+
+    <!-- JS -->
+    <script src="{% static 'employee/js/bootstrap.min.js' %}"></script>
+  	<script src="{% static 'employee/js/zebra_datepicker.min.js' %}"></script>
+  	<script src="{% static 'employee/js/dragndrop.js' %}"></script>
+  	<script src="{% static 'employee/js/script.js' %}"></script>
+
+  </body>
+</html>

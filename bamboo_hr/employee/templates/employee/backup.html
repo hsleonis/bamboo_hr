@@ -1,0 +1,92 @@
+{% extends "employee/home.html" %}
+
+{% block maincontent %}
+<form method="post" enctype="multipart/form-data">
+
+    {% csrf_token %}
+    <div class="col-sm-4">
+        <div class="emp-info-left">
+
+            <h3>Backup Files</h3>
+            <p>Full employee files backup</p>
+
+            <div class="form-group">
+                <label class="control-label">Employee Type</label>
+                <p>
+                    <input type="radio" name="employee_type" value="All"> All
+                    <input type="radio" name="employee_type" value="Active" checked> Active
+                </p>
+            </div>
+
+            <div class="emp-btn download-btn">
+                <p>
+                    <button type="submit" class="btn btn-success">Download Backup</button>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+</form>
+
+<form method="post">
+
+    {% csrf_token %}
+    <div class="col-sm-4">
+        <!-- <div class="emp-info-left">
+
+            <h3>Restore Files</h3>
+
+            <div class="form-group">
+                <label for="employee_id_2" class="control-label">Employee Name</label>
+                <select id="employee_id_2" name="employee_id" class="form-control">
+                    {% for employee in employees %}
+                        {% if forloop.first %}
+                            <option value="{{employee.id}}" selected>{{ employee.displayName }}</option>
+                        {% else %}
+                            <option value="{{employee.id}}">{{ employee.displayName }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="category_id" class="control-label">Folder</label>
+                <select id="category_id" name="category_id" class="form-control">
+                    {% for file_type in file_types.file_types %}
+                        {% if forloop.first %}
+                            <option value="{{file_type.id}}" selected>{{ file_type.name }}</option>
+                        {% else %}
+                            <option value="{{file_type.id}}">{{ file_type.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="fileUpload">
+                <input class="form-control" type="file" multiple name="myfile" />
+            </div>
+
+            <div class="emp-btn upload-btn">
+                <p>
+                    <button type="submit" class="btn btn-success">Restore files</button>
+                </p>
+            </div>
+
+            {% if upload_success %}
+            <div class="alert alert-success alert-dismissible success-upload-alert" role="alert">
+              <button type="button" class="hide-alert close" title="Remove" aria-label="Cancel"><span aria-hidden="true">&times;</span></button>
+              <div class="alert-content">{{ upload_success }}</div>
+            </div>
+            {% endif %}
+
+        </div> -->
+    </div>
+
+</form>
+<script>
+    $(document).ready(function(){
+        $('.backup-tab').addClass('active');
+    });
+</script>
+{% endblock maincontent %}

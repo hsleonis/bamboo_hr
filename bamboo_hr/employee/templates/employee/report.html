@@ -1,0 +1,35 @@
+{% extends "employee/home.html" %}
+
+{% block maincontent %}
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="col-sm-4">
+        <div class="emp-info-left">
+
+            <h3>Report</h3>
+            <p>Download employee file report</p>
+
+            <div class="form-group">
+                <label class="control-label">Employee Type</label>
+                <p>
+                    <input type="radio" name="employee_type" value="All"> All
+                    <input type="radio" name="employee_type" value="Active" checked> Active
+                </p>
+            </div>
+
+            <div class="emp-btn download-btn">
+                <p>
+                    <button type="submit" name="report-submit" class="btn btn-success">Download report</button>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+</form>
+<script>
+    $(document).ready(function(){
+        $('.report-tab').addClass('active');
+    });
+</script>
+{% endblock maincontent %}

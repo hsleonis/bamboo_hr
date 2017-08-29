@@ -1,0 +1,48 @@
+{% extends "employee/home.html" %}
+
+{% block maincontent %}
+<form method="post" enctype="multipart/form-data">
+
+    {% csrf_token %}
+    <div class="col-sm-4">
+        <div class="emp-info-left">
+
+            <h3>Download Files</h3>
+
+            <div class="form-group">
+                <label class="control-label">Employee Type</label>
+                <p>
+                    <input type="radio" name="employee_type" value="all"> All
+                    <input type="radio" name="employee_type" value="Active" checked> Active
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="category_id" class="control-label">Folder</label>
+                <select id="category_id" name="category_id" class="form-control">
+                    {% for file_type in file_types.file_types %}
+                        {% if forloop.first %}
+                            <option value="{{file_type.id}}" selected>{{ file_type.name }}</option>
+                        {% else %}
+                            <option value="{{file_type.id}}">{{ file_type.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="emp-btn download-btn">
+                <p>
+                    <button type="submit" class="btn btn-success">Download file</button>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+</form>
+<script>
+    $(document).ready(function(){
+        $('.document-tab').addClass('active');
+    });
+</script>
+{% endblock maincontent %}

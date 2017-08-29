@@ -1,0 +1,5 @@
+python3.6.pkg
+.DS_Store
+bamboo_hr/app/__pycache__
+bamboo_hr/employee/__pycache__
+bamboo_hr/category/__pycache__

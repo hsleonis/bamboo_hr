@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Bamboo HR</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'app/css/bootstrap.min.css' %}" >
+    <link rel="stylesheet" href="{% static 'app/css/style.css' %}">
+
+  </head>
+  <body class="login-page">
+
+  	<section class="container">
+  		<div class="row">
+  			<div class="col-sm-6 col-sm-offset-3">
+                <div class="main">
+					<div class="login-heading text-center">
+						<h3 class="text-success"><strong>{% block title %}SETUP{% endblock %}</strong></h3>
+					</div>
+                      {% block content %}
+                      <form method="post">
+                          {% csrf_token %}
+                          <div class="form-group has-success">
+                              <label for="api_key">Your API Key</label>
+                              <input id="api_key" class="form-control" type="text" name="api_key" maxlength="200" required />
+                          </div>
+                          <div class="form-group has-success">
+                              <label for="sub_domain">Your subdomain:</label>
+                              <input id="sub_domain" class="form-control" type="text" name="sub_domain" maxlength="100" required />
+                          </div>
+                          <div class="btn-group">
+                            <input type="submit" class="btn btn-primary btn-success" value="Setup">
+                          </div>
+                      </form>
+                      {% endblock %}
+				</div>
+  			</div>
+  		</div>
+  	</section>
+
+  </body>
+</html>

@@ -1,0 +1,130 @@
+{% extends "employee/home.html" %}
+
+{% block maincontent %}
+<form method="post" enctype="multipart/form-data">
+
+    {% csrf_token %}
+    <div class="col-sm-4">
+        <div class="emp-info-left">
+            <div class="form-group">
+                <label class="control-label">Employee Type</label>
+                <p>
+                    <input type="radio" name="employee_type" value="all" checked> All
+                    <input type="radio" name="employee_type" value="Active"> Active
+                    <!--<input type="radio" name="employee_type" value="Inactive"> Inactive-->
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="employee_id" class="control-label">Employee Name</label>
+                <select id="employee_id" name="employee_id" class="form-control">
+                    {% for employee in employees %}
+                        {% if forloop.first %}
+                            <option value="{{employee.id}}" data-type="{{employee.status}}" selected>{{ employee.displayName }}</option>
+                        {% else %}
+                            <option value="{{employee.id}}" data-type="{{employee.status}}" {% if employee.id == id %} selected{% endif %}>{{ employee.displayName }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="label_text">Empolyee #</label><span class="employee_id_show"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="signed_date">Signature Date</label>
+                <div>
+                    <div class="signature-date">
+                        <input id="signed_date" type='text' class="form-control datepicker" name="signed_date" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="category_id" class="control-label">Folder</label>
+                <select id="category_id" name="category_id" class="form-control">
+                    {% for file_type in file_types.file_types %}
+                        {% if forloop.first %}
+                            <option value="{{file_type.id}}" selected>{{ file_type.name }}</option>
+                        {% else %}
+                            <option value="{{file_type.id}}">{{ file_type.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="fileUpload">
+                <input class="form-control" type="file" name="myfile" />
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-sm-4 col-controls">
+
+        {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Cancel"><span aria-hidden="true">&times;</span></button>
+                  <div class="alert-content">{{ message }}</div>
+              </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="alert alert-success alert-dismissible file-upload-alert" role="alert">
+          <button type="button" class="hide-alert close" title="Cancel upload" aria-label="Cancel"><span aria-hidden="true">&times;</span></button>
+          <div class="alert-content"></div>
+        </div>
+
+        <div class="emp-info-right">
+            <div class="emp-btn rename-btn">
+                <p>
+                    <button type="button" class="btn btn-primary">Rename & Upload</button>
+                </p>
+            </div>
+            <div class="emp-btn confirm-btn">
+                <p>
+                    <button type="submit" class="btn btn-success">Confirm Upload</button>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</form>
+<script>
+    $(document).ready(function(){
+        $('.single-profile-tab').addClass('active');
+    });
+</script>
+<script>
+    $(document).ready(function(){
+
+        $.get("{% url 'employee_info' %}" ,{employee_id: $('#employee_id option:selected').val()}, function(data){
+                $('.employee_id_show').text(data.employeeNumber);
+            }).fail(function(){
+                alert('error')
+        });
+
+        $(document).on('change', '#employee_id', function(){
+            $.get("{% url 'employee_info' %}" ,{employee_id: $('#employee_id option:selected').val()}, function(data){
+                $('.employee_id_show').text(data.employeeNumber);
+            }).fail(function(){
+                alert('error')
+            });
+        });
+
+        $(document).on('change', 'input[name="employee_type"]', function(){
+            var status = $(this).val();
+
+            if(status != "all"){
+                $('#employee_id option').hide();
+                $('#employee_id option[data-type="'+status+'"]').show();
+            } else {
+                $('#employee_id option').show();
+            }
+        });
+
+});
+</script>
+{% endblock maincontent %}
