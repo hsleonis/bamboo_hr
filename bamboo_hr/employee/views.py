@@ -340,14 +340,14 @@ def report(request):
     if category_response.status_code == 200:
         response_model['file_types'] = json.loads(category_response.content)
 
-    if (request.method == 'POST' and request.POST['employee_type'] == 'All'):
-        employee_response = type(request)
-        if employee_response.status_code == 200:
-            response_model['employees'] = json.loads(employee_response.content)['employees']
-    else:
-        employee_response = all(request)
-        if employee_response.status_code == 200:
-            response_model['employees'] = json.loads(employee_response.content)
+
+    employee_response = type(request)
+    if employee_response.status_code == 200:
+        response_model['employees'] = json.loads(employee_response.content)['employees']
+    # else:
+    #     employee_response = all(request)
+    #     if employee_response.status_code == 200:
+    #         response_model['employees'] = json.loads(employee_response.content)
 
     if employee_response.status_code == 200:
 
@@ -373,21 +373,20 @@ def report(request):
 
                 for employee in response_model['employees']:
                     employee_row = [''] * index_map
-                    # if isinstance(employee_row, list):
                     employee_row[0] = employee['displayName']
-                    #print('>>>>> ' + employee_row[0])
+
+                    if (request.POST['employee_type'] == 'Active' and employee['status'] != 'Active'):
+                        continue
+
                     employee_hashID = bamboo.get_employee(employee_id=employee['id'], field_list=['employeeNumber'])
                     if employee_hashID.get('employeeNumber', None):
                         employee_row[1] = employee_hashID['employeeNumber']
-                        # employee_row.append(employee_hashID['employeeNumber'])
                     else:
                         employee_row[1] = ''
-                        # employee_row.append('')
 
                     employee_row[2] = employee['location']
                     employee_row[3] = employee['status']
-                    employee_row[4] = employee['status']
-                    # employee_row.append(employee['location'])
+                    employee_row[4] = ''
 
                     employee_categories = bamboo.employee_files_categories(employee['id'])
 
