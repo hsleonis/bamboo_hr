@@ -140,3 +140,13 @@ body {
 .btn-success, .form-control {
 	border-radius: 2px;
 }
+.alert-error {
+	background-color: #ff6e5c;
+}
+.file-preview iframe {
+    width: 100%;
+    min-height: 300px;
+    border: 0;
+    background: #F7F7F7;
+    margin-top: 15px;
+}

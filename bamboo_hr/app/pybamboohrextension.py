@@ -3,20 +3,29 @@ from xml.etree import ElementTree
 
 import requests
 from PyBambooHR import PyBambooHR
-
+import json
 from app import utils
-
+import xmltodict
 
 class PyBambooHRExt(PyBambooHR.PyBambooHR):
+
+    def add_custom_field(self, field):
+        self.employee_fields[field] = 'Custom field ' + field
+
+        return True
 
     def get_company_files_categories(self):
         url = self.base_url + 'files/view/'
         print(url)
+
         response = requests.get(url, headers=self.headers, auth=(self.api_key, ''))
         response.raise_for_status()
 
-        print(xml.etree.ElementTree.fromstring(response.content))
-        return utils.make_dict_from_tree(xml.etree.ElementTree.fromstring(response.content))
+        #print(xml.etree.ElementTree.fromstring(response.content))
+        obj = json.loads(json.dumps(xmltodict.parse(response.content)))
+        #print(obj)
+        #return utils.make_dict_from_tree(xml.etree.ElementTree.fromstring(response.content))
+        return obj
 
     def download_company_file(self, file_id):
         url = self.base_url + "files/{0}/".format(file_id)

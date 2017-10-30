@@ -1,4 +1,6 @@
-from datetime import datetime
+# -*- coding: utf-8 -*-
+
+from datetime import datetime, date
 import json
 import csv
 import requests
@@ -24,20 +26,21 @@ def all(request):
 
     employees = bamboo.get_employee_directory()
     try:
-        list = bamboo.employee_files_categories(employees[0]['id']);
+        #list = bamboo.employee_files_categories(employees[0]['id']);
 
         return HttpResponse(content_type="application/json; charset=utf-8", content=json.dumps(employees))
     except HTTPError as e:
-        return HttpResponse(status=e.code)
+        return HttpResponse(status=404)
 
 def type(request):
     bamboo = PyBambooHRExt(subdomain=request.session['sub_domain'], api_key=request.session['api_key'])
 
     employees = bamboo.request_custom_report(report_format='json', field_list=['id', 'displayName', 'location', 'status'])
+    #print(employees)
     try:
         return HttpResponse(content_type="application/json; charset=utf-8", content=json.dumps(employees))
     except HTTPError as e:
-        return HttpResponse(status=e.code)
+        return HttpResponse(status=404)
 
 def upload_file(request):
     file_upload_response = {'model':{'success':False}}
@@ -93,12 +96,25 @@ def info(request):
 
     return HttpResponse(status=400)
 
+def check_file_type(file, file_type):
+    file_len = len(file['name'].split('_'))
+    if file_len == 4:
+        index = 0
+    else:
+        index = 1
+
+    if file['name'].split('_')[index] == file_type:
+        return True
+
+    return False
+
 def home(request):
+
     host = request.get_host()
-    all(request)
+    #all(request)
 
     category_response = category_views.all(request)
-    employee_response = all(request)
+    #employee_response = all(request)
     employee_type = type(request)
 
     response_model = {
@@ -108,12 +124,25 @@ def home(request):
         'id': request.session.get('employee_id')
     }
 
+    if employee_type.status_code == 200:
+        try:
+            response_model['employees'] = json.loads(employee_type.content)['employees']
+        except ValueError:  # includes simplejson.decoder.JSONDecodeError
+            return HttpResponse('Decoding JSON has failed')
+    else:
+        return HttpResponse("Employee/views.py Error: Can not load employee list.")
+
     if category_response.status_code == 200:
-        response_model['file_types'] = json.loads(category_response.content)
+        try:
+            #print(category_response.content)
+            response_model['file_types'] = json.loads(category_response.content)
+        except ValueError:  # includes simplejson.decoder.JSONDecodeError
+            return HttpResponse('Decoding file category JSON has failed')
+    else:
+        return HttpResponse("Employee/views.py Error: Can not load category data.")
+
     # if employee_response.status_code == 200:
     #     response_model['employees'] = json.loads(employee_response.content)
-    if employee_type.status_code == 200:
-        response_model['employees'] = json.loads(employee_type.content)['employees']
 
     if request.method == 'POST' and request.FILES.get('myfile', None):
         myfile = request.FILES['myfile']
@@ -129,9 +158,16 @@ def home(request):
         category_id = category_id_string.split('#')[0]
         file_type = category_id_string.split('#')[1]
         signed_date = parse_date(request.POST['signed_date'])
+
+        if signed_date is None:
+            file_date = ''
+        else:
+            file_date = signed_date.strftime('%Y.%m.%d') + '_'
+
         file_path = default_storage.path('tmp/' + myfile.name)
 
-        override_name = "{}_{}_{}_{}_{}".format(signed_date.strftime('%Y.%m.%d'), file_type, employee['employeeNumber'], employee['lastName'], employee['firstName'])
+        override_name = "{}{}_{}_{}_{}".format(file_date, file_type, employee['lastName'], employee['firstName'], employee['employeeNumber'])
+        #print (override_name)
 
         #check if file is already present
         employee_categories = bamboo.employee_files_categories(employee['id'])
@@ -142,11 +178,13 @@ def home(request):
                     if isinstance(files, list):
                         for file in files:
                             if len(file['name'].split('_')) > 2:
-                                if file['name'].split('_')[1] == file_type and file['originalFileName'] == myfile.name:
+                                #if file['name'].split('_')[1] == file_type and file['originalFileName'] == myfile.name:
+                                if check_file_type(file, file_type) and file['originalFileName'] == myfile.name:
                                     bamboo.delete_file(employee_id=employee_id, file_id=file['id'])
                     else:
                         if len(files['name'].split('_')) > 2:
-                            if files['name'].split('_')[1] == file_type and files['originalFileName'] == myfile.name:
+                            #if files['name'].split('_')[1] == file_type and files['originalFileName'] == myfile.name:
+                            if check_file_type(files, file_type) and files['originalFileName'] == myfile.name:
                                 bamboo.delete_file(employee_id=employee_id, file_id=files['id'])
                 break
 
@@ -159,9 +197,16 @@ def home(request):
             os.remove(default_storage.path('tmp/' + myfile.name))
         except HTTPError as e:
             os.remove(default_storage.path('tmp/' + myfile.name))
-            response_model['upload_success'] = 'File can not be uploaded!'
+            if e.code == 403:
+                response_model['upload_success'] = 'The API user does not have permission!'
+            elif e.code == 404:
+                response_model['upload_success'] = 'The category ID was not found!'
+            elif e.code == 413:
+                response_model['upload_success'] = 'The file size exceeds 20MB or the storage limit!'
+            else:
+                response_model['upload_success'] = 'File can not be uploaded!'
 
-            messages.error(request, 'File can not be uploaded!')
+            messages.error(request, response_model['upload_success'])
             return HttpResponseRedirect('home')
 
         return HttpResponseRedirect('home')
@@ -204,7 +249,8 @@ def document_download(request):
 
     response_model = {
         'file_types': {},
-        'employee_list': {}
+        'employee_list': {},
+        'upload_success': ''
     }
 
     if category_response.status_code == 200:
@@ -214,7 +260,6 @@ def document_download(request):
 
     for employee in employee_list:
         try:
-            #print(employee['id'])
             employee_categories = bamboo.employee_files_categories(employee['id'])
             for category in employee_categories['employee']['category']:
                 if category['id'] == category_id:
@@ -223,25 +268,23 @@ def document_download(request):
                         if isinstance(files, list):
                             for file in files:
                                 if len(file['name'].split('_')) > 2:
-                                    if file['name'].split('_')[1] == file_type:
+                                    #if file['name'].split('_')[1] == file_type:
+                                    if check_file_type(file, file_type):
                                         file_content = bamboo.download_file(employee['id'], file['id'])
                                         with open(default_storage.path('tmp/' + file['name'] + os.path.splitext(file['originalFileName'])[1]), 'wb+') as destination:
                                             destination.write(file_content)
                             break
                         else:
                             if len(files['name'].split('_')) > 2:
-                                if files['name'].split('_')[1] == file_type:
+                                #if files['name'].split('_')[1] == file_type:
+                                if check_file_type(files, file_type):
                                     file_content = bamboo.download_file(employee['id'], files['id'])
                                     with open(default_storage.path('tmp/' + files['name'] + os.path.splitext(files['originalFileName'])[1]), 'wb+') as destination:
                                         destination.write(file_content)
-
-
-
-
         except HTTPError as e:
             #os.remove(default_storage.path('tmp/' + myfile.name))
-            response_model['upload_success'] = 'File can not be uploaded!'
-            return render(request, 'employee/document-download.html', response_model)
+            response_model['upload_success'] = 'Some File can not be downloaded!'
+            #return render(request, 'employee/document-download.html', response_model)
 
 
     # if employee_response.status_code == 200:
@@ -269,7 +312,8 @@ def document_download(request):
 def backup(request):
     response_model = {
         'file_types': {},
-        'employees': {}
+        'employees': {},
+        'upload_success': ''
     }
 
     employee_url = request.build_absolute_uri(reverse('all_employee'))
@@ -295,24 +339,29 @@ def backup(request):
     bamboo = PyBambooHRExt(subdomain=request.session['sub_domain'], api_key=request.session['api_key'])
 
     for employee in response_model['employees']:
-        employee_categories = bamboo.employee_files_categories(employee['id'])
-        for category in employee_categories['employee']['category']:
-            category_name = category['name']
-            directory = default_storage.path('tmp/'+ employee["displayName"] + '/' + category_name)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            if category.get('file', None):
-                files = category['file']
-                if isinstance(files, list):
-                    for file in files:
-                        file_content = bamboo.download_file(employee['id'], file['id'])
-                        with open(directory + "/" + file['name'] + os.path.splitext(file['originalFileName'])[1], 'wb+') as destination:
-                            destination.write(file_content)
+        try:
+            employee_categories = bamboo.employee_files_categories(employee['id'])
+            for category in employee_categories['employee']['category']:
+                category_name = category['name']
+                directory = default_storage.path('tmp/'+ employee["displayName"] + '/' + category_name)
 
-                else:
-                    file_content = bamboo.download_file(employee['id'], files['id'])
-                    with open(default_storage.path(directory + '/' + files['name'] + os.path.splitext(files['originalFileName'])[1]), 'wb+') as destination:
-                        destination.write(file_content)
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                if category.get('file', None):
+                    files = category['file']
+                    if isinstance(files, list):
+                        for file in files:
+                            file_content = bamboo.download_file(employee['id'], file['id'])
+                            with open(directory + "/" + file['name'] + os.path.splitext(file['originalFileName'])[1], 'wb+') as destination:
+                                destination.write(file_content)
+
+                    else:
+                        file_content = bamboo.download_file(employee['id'], files['id'])
+                        with open(default_storage.path(directory + '/' + files['name'] + os.path.splitext(files['originalFileName'])[1]), 'wb+') as destination:
+                            destination.write(file_content)
+        except HTTPError as e:
+            response_model['upload_success'] = 'Some Files can not be downloaded!'
+
 
     shutil.make_archive("files", 'zip', root_dir=default_storage.path('tmp/'), )
     delete_files_folders(default_storage.path('tmp/'))
@@ -353,6 +402,7 @@ def report(request):
 
         #user_profile = UserProfile.objects.first()
         bamboo = PyBambooHRExt(subdomain=request.session['sub_domain'], api_key=request.session['api_key'])
+        bamboo.add_custom_field('customContractStatus')
 
         if request.method == "POST":
             with open(default_storage.path('tmp/report.csv'), "w+") as rfile:
@@ -370,7 +420,6 @@ def report(request):
                     index_map = index_map + 1
                 csv_file.writerow(employee_header)
 
-
                 for employee in response_model['employees']:
                     employee_row = [''] * index_map
                     employee_row[0] = employee['displayName']
@@ -378,7 +427,9 @@ def report(request):
                     if (request.POST['employee_type'] == 'Active' and employee['status'] != 'Active'):
                         continue
 
-                    employee_hashID = bamboo.get_employee(employee_id=employee['id'], field_list=['employeeNumber'])
+                    employee_hashID = bamboo.get_employee(employee_id=employee['id'], field_list=['employeeNumber','customContractStatus'])
+                    print (employee_hashID)
+
                     if employee_hashID.get('employeeNumber', None):
                         employee_row[1] = employee_hashID['employeeNumber']
                     else:
@@ -386,7 +437,7 @@ def report(request):
 
                     employee_row[2] = employee['location']
                     employee_row[3] = employee['status']
-                    employee_row[4] = ''
+                    employee_row[4] = employee_hashID['customContractStatus']
 
                     employee_categories = bamboo.employee_files_categories(employee['id'])
 
@@ -399,7 +450,14 @@ def report(request):
                             if isinstance(files, list):
                                 for file in files:
                                     if len(file['name'].split('_')) > 2:
-                                        file_type = file['name'].split('_')[1]
+                                        #file_type = file['name'].split('_')[1]
+                                        if len(file['name'].split('_')) == 4:
+                                            index = 0
+                                        else:
+                                            index = 1
+
+                                        file_type = file['name'].split('_')[index]
+
                                         key = category_name + "/" + file_type
                                         #print(">>>>>> " + key +  ' ' + category['name'] + ' ' + file_type)
                                         if index_dictionary.get(key, None):
@@ -412,7 +470,14 @@ def report(request):
 
                             else:
                                 if len(files['name'].split('_')) > 2:
-                                    file_type = files['name'].split('_')[1]
+                                    #file_type = files['name'].split('_')[1]
+                                    if len(files['name'].split('_')) == 4:
+                                        index = 0
+                                    else:
+                                        index = 1
+
+                                    file_type = files['name'].split('_')[index]
+
                                     key = category_name + "/" + file_type
                                     if index_dictionary.get(key, None):
                                         key_index = index_dictionary[key]

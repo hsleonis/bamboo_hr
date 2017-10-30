@@ -32,8 +32,13 @@
                 <label class="label_text">Empolyee #</label><span class="employee_id_show"></span>
             </div>
 
+
             <div class="form-group">
                 <label for="signed_date">Signature Date</label>
+                <p>
+                    <input type="radio" name="sign_date_enable" value="1" checked> Has signature date
+                    <input type="radio" name="sign_date_enable" value="0"> No signature date (ID, Pass, AHV etc.)
+                </p>
                 <div>
                     <div class="signature-date">
                         <input id="signed_date" type='text' class="form-control datepicker" name="signed_date" />
@@ -88,6 +93,8 @@
                     <button type="submit" class="btn btn-success">Confirm Upload</button>
                 </p>
             </div>
+
+            <div id="file-container"></div>
         </div>
 
     </div>
@@ -122,6 +129,17 @@
                 $('#employee_id option[data-type="'+status+'"]').show();
             } else {
                 $('#employee_id option').show();
+            }
+        });
+
+        $(document).on('change', 'input[name="sign_date_enable"]', function(){
+            var status = $(this).val();
+
+            if(status == '0'){
+                $('.signature-date').hide();
+                $('#signed_date').val('');
+            } else {
+                $('.signature-date').show();
             }
         });
 

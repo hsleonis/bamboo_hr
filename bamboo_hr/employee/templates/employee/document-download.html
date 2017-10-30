@@ -34,6 +34,12 @@
                 <p>
                     <button type="submit" class="btn btn-success">Download file</button>
                 </p>
+                {% if upload_success %}
+                <div class="alert alert-error alert-dismissible" role="alert">
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Cancel"><span aria-hidden="true">&times;</span></button>
+                  <div class="alert-content">{{ upload_success }}</div>
+                </div>
+                {% endif %}
             </div>
 
         </div>

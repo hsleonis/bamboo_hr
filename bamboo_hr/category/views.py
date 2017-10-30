@@ -18,29 +18,40 @@ def all(request):
         file_id = ''
         file_category_dictionary = bamboo.get_company_files_categories();
         file_date = None
-        for category in file_category_dictionary['files']['category']:
-            # print(json.dumps(category))
-            files = category.get('file', None)
-            if files:
-                for file in category.get('file', None):
-                    if file['name'] == 'file_folders_list_dont_delete.txt':
-                        if file_date:
-                            date_created = file['dateCreated']
-                            if date_created > file_date:
-                                file_id = file['id']
-                                file_date = date_created
-                        else:
-                            file_date = file['dateCreated']
-                            file_id = file['id']
 
-        # print('########')
-        # print(file_id)
-        # print('@@@@@@@@@@')
-        # print(file_category_dictionary)
+        # for category in file_category_dictionary['files']['category']:
+        #     files = category.get('file', None)
+        #     if files:
+        #         for file in category.get('file', None):
+
+        # new start
+        filesCategories = list(filter(lambda x: 'file' in x, file_category_dictionary['files']['category']))
+        for category in filesCategories:
+            files = category['file']
+            if isinstance(files, dict):
+                lst = []
+                lst.append(files)
+                files = lst
+                #new end
+            for file in files:
+                if file['name'] == 'file_folders_list_dont_delete.txt':
+                    if file_date:
+                        date_created = file['dateCreated']
+                        if date_created > file_date:
+                            file_id = file['@id']
+                            file_date = date_created
+                    else:
+                        file_date = file['dateCreated']
+                        file_id = file['@id']
+
         if file_id is None:
             return HttpResponse(status=404)
 
-        employees = bamboo.get_employee_directory()
+        # bug fix
+        #employees = bamboo.get_employee_directory()
+        employees_dir = bamboo.request_custom_report(report_format='json',
+                                                 field_list=['id', 'displayName', 'location', 'status'])
+        employees = employees_dir['employees']
         try:
             employee_categories = bamboo.employee_files_categories(employees[0]['id']);
             category_id_dic = {}
@@ -121,13 +132,10 @@ def all(request):
                         file_type_dic['id'] = categor_mapper[category_name]['id'] + "#" + file_type_name
                         file_type_dic['name'] = file_type
                         response_dic['file_types'].append(file_type_dic)
-
-
         except HTTPError as e:
-            return HttpResponse(status=e.code)
+            return HttpResponse("Category/views.py Error: Can not load employee list.")
         #print(json.dumps(file_category_dictionary))
         # return HttpResponse(json.dumps(file_category_dictionary, sort_keys=True, indent=4))
-
 
         return HttpResponse(content_type="application/json; charset=utf-8", content=json.dumps(response_dic))
     except HTTPError as e:
@@ -137,4 +145,3 @@ def all(request):
 
 def add(request):
     pass
-
